@@ -1,9 +1,5 @@
-const input = document.getElementById('task-input');
-const addBtn = document.getElementById('add-task-btn');
-const todoList = document.getElementById('todo-list');
-
 function getTasks() {
-    return JSON.parse(localStorage.getItem('tasks') || '[]');
+    return JSON.parse(localStorage.getItem('tasks')) || [];
 }
 
 function saveTasks(tasks) {
@@ -11,40 +7,50 @@ function saveTasks(tasks) {
 }
 
 function renderTasks() {
-    todoList.innerHTML = '';
+    const ul = document.getElementById('task-list');
+    ul.innerHTML = '';
+
     const tasks = getTasks();
 
     tasks.forEach((task, index) => {
         const li = document.createElement('li');
 
-        // Checkbox
+        // --- Checkbox ---
         const checkbox = document.createElement('input');
         checkbox.type = 'checkbox';
         checkbox.checked = task.done;
         checkbox.addEventListener('change', () => toggleDone(index));
 
-        // Texto
+        // --- Texto de la tarea ---
         const span = document.createElement('span');
         span.textContent = task.text;
-        span.style.margin = '0 8px';
         span.style.textDecoration = task.done ? 'line-through' : 'none';
+        span.classList.add('task-text');
 
-        // Botón eliminar
+        // --- Botón Editar ---
+        const editBtn = document.createElement('button');
+        editBtn.textContent = 'Editar';
+        editBtn.addEventListener('click', () => editTask(index));
+
+        // --- Botón Eliminar ---
         const deleteBtn = document.createElement('button');
         deleteBtn.textContent = 'Eliminar';
-        deleteBtn.addEventListener('click', () => removeTask(index));
+        deleteBtn.addEventListener('click', () => deleteTask(index));
 
+        // Agregar todo al <li>
         li.appendChild(checkbox);
         li.appendChild(span);
+        li.appendChild(editBtn);
         li.appendChild(deleteBtn);
-
-        todoList.appendChild(li);
+        ul.appendChild(li);
     });
 }
 
 function addTask() {
+    const input = document.getElementById('task-input');
     const text = input.value.trim();
-    if (!text) {
+
+    if (text === '') {
         alert('La tarea no puede estar vacía.');
         return;
     }
@@ -53,7 +59,7 @@ function addTask() {
     tasks.push({ text, done: false });
     saveTasks(tasks);
 
-    input.value = '';
+    input.value = ''; 
     renderTasks();
 }
 
@@ -64,12 +70,41 @@ function toggleDone(index) {
     renderTasks();
 }
 
-function removeTask(index) {
+function editTask(index) {
+    const tasks = getTasks();
+    const currentText = tasks[index].text;
+
+    const newText = prompt('Editar tarea:', currentText);
+
+    if (newText !== null) { 
+        const trimmed = newText.trim();
+        if (trimmed !== '') {
+            tasks[index].text = trimmed;
+            saveTasks(tasks);
+            renderTasks();
+        } else {
+            alert('La tarea no puede quedar vacía.');
+        }
+    }
+}
+
+function deleteTask(index) {
     const tasks = getTasks();
     tasks.splice(index, 1);
     saveTasks(tasks);
     renderTasks();
 }
 
-addBtn.addEventListener('click', addTask);
-document.addEventListener('DOMContentLoaded', renderTasks);
+document.addEventListener('DOMContentLoaded', () => {
+    const addBtn = document.getElementById('add-task-btn');
+    addBtn.addEventListener('click', addTask);
+
+    // Crear lista si no existe aún
+    if (!document.getElementById('task-list')) {
+        const ul = document.createElement('ul');
+        ul.id = 'task-list';
+        document.querySelector('.todo-container').appendChild(ul);
+    }
+
+    renderTasks();
+});
